@@ -98,14 +98,17 @@ func checkJsonService(
 			body, err := ioutil.ReadAll(resp.Body)
 			if (err != nil){
 				fmt.Println("Unable to read json answer.", err)
-			}
-			s, err := getJsonState([]byte(body))
-			if (err == nil) && (strings.Contains(s.JsonServiceState, checkSuccessString)) {
-				returnState = 1
-				Ss[checkName + "_rest_state_up"] = returnState
-			} else {
 				returnState = 0
 				Ss[checkName + "_rest_state_up"] = returnState
+			} else {
+				s, err := getJsonState([]byte(body))
+				if (err == nil) && (strings.Contains(s.JsonServiceState, checkSuccessString)) {
+					returnState = 1
+					Ss[checkName+"_rest_state_up"] = returnState
+				} else {
+					returnState = 0
+					Ss[checkName+"_rest_state_up"] = returnState
+				}
 			}
 		} else {
 			returnState = 0
