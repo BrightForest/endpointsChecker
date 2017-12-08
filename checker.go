@@ -136,22 +136,27 @@ func checkJsonService(
 				returnState = 0
 				Ss[checkName + "_rest_state_up"] = returnState
 				Warning.Println(checkName + " service is not available now.")
+				defer resp.Body.Close()
 			} else {
 				s, err := getJsonState([]byte(body))
 				if (err == nil) && (strings.Contains(s.JsonServiceState, checkSuccessString)) {
 					returnState = 1
 					Ss[checkName+"_rest_state_up"] = returnState
+					defer resp.Body.Close()
 				} else {
 					returnState = 0
 					Ss[checkName+"_rest_state_up"] = returnState
 					Warning.Println(checkName + " service is not available now.")
+					defer resp.Body.Close()
 				}
 			}
 		} else {
 			returnState = 0
 			Ss[checkName + "_rest_state_up"] = returnState
 			Warning.Println(checkName + " service is not available now.")
+			defer resp.Body.Close()
 		}
+		defer resp.Body.Close()
 	}
 }
 
@@ -185,10 +190,12 @@ func checkHttpService(
 		if (err == nil) && (resp.StatusCode == checkSuccessInt) {
 			returnState = 1
 			Ss[checkName + "_http_state_up"] = returnState
+			defer resp.Body.Close()
 		} else {
 			returnState = 0
 			Ss[checkName + "_http_state_up"] = returnState
 			Warning.Println(checkName + " service is not available now.")
+			defer resp.Body.Close()
 		}
 	}
 }
