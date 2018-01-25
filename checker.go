@@ -125,7 +125,6 @@ func checkJsonService(
 	client := &http.Client{Transport:tr}
 	var returnState int
 	for {
-		time.Sleep(1000 * time.Millisecond * time.Duration(checkRateSeconds))
 		resp, err := client.Get(checkEndpoint)
 		if (err == nil) && (resp.StatusCode == 200) {
 			if (err != nil){
@@ -153,8 +152,11 @@ func checkJsonService(
 			Ss[checkName + "_rest_state_up"] = returnState
 			Warning.Println(checkName + " service is not available now.")
 		}
-		io.Copy(ioutil.Discard, resp.Body)
-		defer resp.Body.Close()
+		if (resp != nil){
+			io.Copy(ioutil.Discard, resp.Body)
+			resp.Body.Close()
+		}
+		time.Sleep(1000 * time.Millisecond * time.Duration(checkRateSeconds))
 	}
 }
 
@@ -184,7 +186,6 @@ func checkHttpService(
 		}
 	client := &http.Client{Transport:tr}
 	for {
-		time.Sleep(1000 * time.Millisecond * time.Duration(checkRateSeconds))
 		resp, err := client.Get(checkEndpoint)
 		if (err == nil) && (resp.StatusCode == checkSuccessInt) {
 			returnState = 1
@@ -194,8 +195,11 @@ func checkHttpService(
 			Ss[checkName + "_http_state_up"] = returnState
 			Warning.Println(checkName + " service is not available now.")
 		}
-		io.Copy(ioutil.Discard, resp.Body)
-		defer resp.Body.Close()
+		if (resp != nil){
+			io.Copy(ioutil.Discard, resp.Body)
+			resp.Body.Close()
+		}
+		time.Sleep(1000 * time.Millisecond * time.Duration(checkRateSeconds))
 	}
 }
 
