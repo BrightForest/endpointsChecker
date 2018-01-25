@@ -59,15 +59,15 @@ func main() {
 
 func checkSheduler(config Configs) {
 	for i := 0; i < len(config.Cfgs); i++ {
-		if (strings.Contains("http", config.Cfgs[i].CheckType)) {
-			go checkHttpService(
-				config.Cfgs[i].CheckEndpoint,
-				config.Cfgs[i].CheckSuccessString,
-				config.Cfgs[i].CheckRateSeconds,
-				config.Cfgs[i].CheckName,
-				config.Cfgs[i].CheckTimeout)
-			Info.Println(config.Cfgs[i].CheckName + " service was added.")
-		}
+				if (strings.Contains("http", config.Cfgs[i].CheckType)) {
+					go checkHttpService(
+						config.Cfgs[i].CheckEndpoint,
+						config.Cfgs[i].CheckSuccessString,
+						config.Cfgs[i].CheckRateSeconds,
+						config.Cfgs[i].CheckName,
+						config.Cfgs[i].CheckTimeout)
+					Info.Println(config.Cfgs[i].CheckName + " service was added.")
+				}
 		if (strings.Contains("rest", config.Cfgs[i].CheckType)) {
 			go checkJsonService(
 				config.Cfgs[i].CheckEndpoint,
@@ -120,11 +120,11 @@ func checkJsonService(
 	checkTimeout int) {
 	tr := &http.Transport{
 		IdleConnTimeout: 1000 * time.Millisecond * time.Duration(checkTimeout),
+		TLSHandshakeTimeout: 1000 * time.Millisecond * time.Duration(checkTimeout),
 	}
 	client := &http.Client{Transport:tr}
 	var returnState int
 	for {
-		time.Sleep(1000 * time.Millisecond * time.Duration(checkRateSeconds))
 		resp, err := client.Get(checkEndpoint)
 		if (err == nil) && (resp.StatusCode == 200) {
 			if (err != nil){
@@ -152,6 +152,11 @@ func checkJsonService(
 			Ss[checkName + "_rest_state_up"] = returnState
 			Warning.Println(checkName + " service is not available now.")
 		}
+		if (resp != nil){
+			io.Copy(ioutil.Discard, resp.Body)
+			resp.Body.Close()
+		}
+		time.Sleep(1000 * time.Millisecond * time.Duration(checkRateSeconds))
 	}
 }
 
@@ -177,10 +182,10 @@ func checkHttpService(
 	}
 	tr := &http.Transport{
 		IdleConnTimeout: 1000 * time.Millisecond * time.Duration(checkTimeout),
+		TLSHandshakeTimeout: 1000 * time.Millisecond * time.Duration(checkTimeout),
 		}
 	client := &http.Client{Transport:tr}
 	for {
-		time.Sleep(1000 * time.Millisecond * time.Duration(checkRateSeconds))
 		resp, err := client.Get(checkEndpoint)
 		if (err == nil) && (resp.StatusCode == checkSuccessInt) {
 			returnState = 1
@@ -190,6 +195,11 @@ func checkHttpService(
 			Ss[checkName + "_http_state_up"] = returnState
 			Warning.Println(checkName + " service is not available now.")
 		}
+		if (resp != nil){
+			io.Copy(ioutil.Discard, resp.Body)
+			resp.Body.Close()
+		}
+		time.Sleep(1000 * time.Millisecond * time.Duration(checkRateSeconds))
 	}
 }
 
