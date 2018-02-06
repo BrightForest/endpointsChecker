@@ -13,6 +13,7 @@ import (
 	"time"
 	"encoding/json"
 	"io"
+	"crypto/tls"
 )
 
 var Ss = map[string]int{}
@@ -59,15 +60,15 @@ func main() {
 
 func checkSheduler(config Configs) {
 	for i := 0; i < len(config.Cfgs); i++ {
-				if (strings.Contains("http", config.Cfgs[i].CheckType)) {
-					go checkHttpService(
-						config.Cfgs[i].CheckEndpoint,
-						config.Cfgs[i].CheckSuccessString,
-						config.Cfgs[i].CheckRateSeconds,
-						config.Cfgs[i].CheckName,
-						config.Cfgs[i].CheckTimeout)
-					Info.Println(config.Cfgs[i].CheckName + " service was added.")
-				}
+		if (strings.Contains("http", config.Cfgs[i].CheckType)) {
+			go checkHttpService(
+				config.Cfgs[i].CheckEndpoint,
+				config.Cfgs[i].CheckSuccessString,
+				config.Cfgs[i].CheckRateSeconds,
+				config.Cfgs[i].CheckName,
+				config.Cfgs[i].CheckTimeout)
+			Info.Println(config.Cfgs[i].CheckName + " service was added.")
+		}
 		if (strings.Contains("rest", config.Cfgs[i].CheckType)) {
 			go checkJsonService(
 				config.Cfgs[i].CheckEndpoint,
@@ -121,6 +122,7 @@ func checkJsonService(
 	tr := &http.Transport{
 		IdleConnTimeout: 1000 * time.Millisecond * time.Duration(checkTimeout),
 		TLSHandshakeTimeout: 1000 * time.Millisecond * time.Duration(checkTimeout),
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 	client := &http.Client{Transport:tr}
 	var returnState int
@@ -151,6 +153,13 @@ func checkJsonService(
 			returnState = 0
 			Ss[checkName + "_rest_state_up"] = returnState
 			Warning.Println(checkName + " service is not available now.")
+			if (err != nil) {
+				Warning.Println(err)
+			} else {
+				if (resp != nil){
+					Warning.Println(checkName + " service returned response code: " + resp.Status)
+				}
+			}
 		}
 		if (resp != nil){
 			io.Copy(ioutil.Discard, resp.Body)
@@ -183,7 +192,8 @@ func checkHttpService(
 	tr := &http.Transport{
 		IdleConnTimeout: 1000 * time.Millisecond * time.Duration(checkTimeout),
 		TLSHandshakeTimeout: 1000 * time.Millisecond * time.Duration(checkTimeout),
-		}
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
 	client := &http.Client{Transport:tr}
 	for {
 		resp, err := client.Get(checkEndpoint)
@@ -194,6 +204,13 @@ func checkHttpService(
 			returnState = 0
 			Ss[checkName + "_http_state_up"] = returnState
 			Warning.Println(checkName + " service is not available now.")
+			if (err != nil) {
+				Warning.Println(err)
+			} else {
+				if (resp != nil){
+					Warning.Println(checkName + " service returned response code: " + resp.Status)
+				}
+			}
 		}
 		if (resp != nil){
 			io.Copy(ioutil.Discard, resp.Body)
