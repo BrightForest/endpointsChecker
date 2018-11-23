@@ -203,6 +203,8 @@ func checkHttpService(
 		} else {
 			if (err != nil) {
 				Warning.Println(err)
+				returnState = 0
+				Ss[checkName + "_http_state_up"] = returnState
 			} else {
 				returnState = 0
 				Ss[checkName + "_http_state_up"] = returnState
